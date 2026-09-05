@@ -77,8 +77,13 @@ const assurances = [
   },
 ];
 
-export default async function GetStartedPage() {
-  const [services, testimonials, logos] = await Promise.all([
+export default async function GetStartedPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ref?: string }>;
+}) {
+  const [{ ref }, services, testimonials, logos] = await Promise.all([
+    searchParams,
     getServices(),
     getTestimonials(true),
     getClientLogos(),
@@ -105,10 +110,16 @@ export default async function GetStartedPage() {
             {/* Form */}
             <Reveal className="order-2">
               <div className="relative">
+                {ref && (
+                  <p className="mb-3 inline-flex items-center gap-2 rounded-full glass px-3.5 py-1.5 text-xs font-medium text-muted-foreground">
+                    <span className="size-1.5 rounded-full bg-brand-500" />
+                    Thanks for checking us out — glad you liked what you saw.
+                  </p>
+                )}
                 <div className="rounded-3xl border border-border/60 bg-card/80 p-6 backdrop-blur-xl sm:p-8">
                   <LeadForm
                     services={services.map((s) => s.title)}
-                    source="/get-started"
+                    source={ref ? `/get-started (ref: ${ref})` : "/get-started"}
                   />
                 </div>
               </div>

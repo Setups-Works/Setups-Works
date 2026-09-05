@@ -12,6 +12,7 @@ import { TestimonialsSection } from "@/components/sections/testimonials";
 import { BlogPreview } from "@/components/sections/blog-preview";
 import { FAQSection } from "@/components/sections/faq";
 import { CTASection } from "@/components/sections/cta";
+import { ReferralPopup } from "@/components/referral-popup";
 import {
   JsonLd,
   organizationSchema,
@@ -67,9 +68,14 @@ export const metadata: Metadata = {
 
 export const revalidate = 300;
 
-export default async function HomePage() {
-  const [blogs, portfolio, testimonials, products, logos, services] =
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; utm_source?: string }>;
+}) {
+  const [{ from, utm_source }, blogs, portfolio, testimonials, products, logos, services] =
     await Promise.all([
+      searchParams,
       getFeaturedBlogs(3),
       getPortfolio(),
       getTestimonials(true),
@@ -78,8 +84,20 @@ export default async function HomePage() {
       getServices(),
     ]);
 
+  // Any inbound link tagged with `?from=` or `?utm_source=` — a "Developed by
+  // Setups Works" credit on a client site, a directory listing, anything —
+  // gets a quote-request popup instead of silently landing on the homepage
+  // with no way to act on that traffic.
+  const ref = from || utm_source;
+
   return (
     <>
+      {ref && (
+        <ReferralPopup
+          services={services.map((s) => s.title)}
+          source={`homepage (ref: ${ref})`}
+        />
+      )}
       <JsonLd
         data={[
           organizationSchema(),

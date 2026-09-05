@@ -27,31 +27,43 @@ export function LeadFormModal({
   services = [],
   source,
   className,
+  hideTrigger = false,
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
 }: {
   triggerLabel?: string;
   defaultService?: string;
   services?: string[];
   source?: string;
   className?: string;
+  /** Renders only the dialog, no visible button — for a caller that opens it some other way (e.g. a custom nudge). */
+  hideTrigger?: boolean;
+  /** Controlled open state, for a caller (like ReferralPopup) that decides when to open this. Falls back to internal state when omitted. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = onOpenChangeProp ?? setOpenState;
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className={cn(
-          "group inline-flex items-center gap-2 rounded-xl bg-brand-500 px-6 py-3.5 font-semibold text-white transition-all hover:bg-brand-600",
-          className,
-        )}
-      >
-        {triggerLabel}
-        <FontAwesomeIcon
-          icon={faArrowRight}
-          className="size-3.5 transition-transform group-hover:translate-x-1"
-        />
-      </button>
+      {!hideTrigger && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className={cn(
+            "group inline-flex items-center gap-2 rounded-xl bg-brand-500 px-6 py-3.5 font-semibold text-white transition-all hover:bg-brand-600",
+            className,
+          )}
+        >
+          {triggerLabel}
+          <FontAwesomeIcon
+            icon={faArrowRight}
+            className="size-3.5 transition-transform group-hover:translate-x-1"
+          />
+        </button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
