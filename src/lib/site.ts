@@ -97,6 +97,17 @@ export const siteConfig = {
     description:
       "Founder & CEO of Setups Works. Passionate about Artificial Intelligence, software engineering, and building developer tools that help programmers prepare for coding interviews.",
     /**
+     * Family relationships — feeds Person.parent / Person.sibling in the
+     * JSON-LD schema below. Corroborates the Person entity for Knowledge
+     * Graph reconciliation the same way alumniOf and worksFor do: named
+     * relationships, not just text.
+     */
+    family: {
+      father: "Rajendran",
+      mother: "Mari Rajendran",
+      siblings: ["Thilac Rajendran", "Abinash Rajendran"],
+    },
+    /**
      * The university exactly as Google's own entity names it — the founder is
      * already listed under its "Notable alumni", so matching that string and
      * pointing at the same Wikidata/Wikipedia identifiers lets Google tie our

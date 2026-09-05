@@ -498,6 +498,11 @@ export function personSchema(founder?: Founder, products?: Product[]) {
       name: `${siteConfig.address.locality}, ${siteConfig.address.region}, India`,
     },
     nationality: { "@type": "Country", name: "India" },
+    parent: [
+      { "@type": "Person", name: p.family.father },
+      { "@type": "Person", name: p.family.mother },
+    ],
+    sibling: p.family.siblings.map((name) => ({ "@type": "Person", name })),
     // The awarded qualification. recognizedBy reuses the same institution as
     // alumniOf, so the two can never name different universities.
     ...(founder?.credentialCategory
