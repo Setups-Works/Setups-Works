@@ -69,8 +69,8 @@ const skillGroups = [
     "founder.educationEnd": "2026",
     "founder.credentialCategory": "Bachelor's degree",
     "founder.educationalLevel": "Bachelor",
-    "founder.titles": ["Software Developer", "Web Designer", "Digital Marketer", "Film Director"],
-    "founder.bio": "Nitheesh Rajendran is an Indian entrepreneur, software developer, and technology enthusiast from Tamil Nadu. He is the Founder & CEO of Setups Works, a digital agency building websites, mobile apps, and AI-powered software.",
+    "founder.titles": ["Film Director", "Software Developer", "Web Designer", "Digital Marketer"],
+    "founder.bio": "Nitheesh Rajendran is an Indian entrepreneur, software developer, and technology enthusiast from Tamil Nadu. He is the Director, Founder & CEO of Setups Works, a digital agency building websites, mobile apps, and AI-powered software.",
   }}, { upsert: true });
 
   const d = await Settings.findOne({ key: "site" }).lean() as any;

@@ -95,7 +95,7 @@ export const siteConfig = {
       height: 1500,
     },
     description:
-      "Founder & CEO of Setups Works. Passionate about Artificial Intelligence, software engineering, and building developer tools that help programmers prepare for coding interviews.",
+      "Director, Founder & CEO of Setups Works. Passionate about Artificial Intelligence, software engineering, and building developer tools that help programmers prepare for coding interviews.",
     /**
      * Family relationships — feeds Person.parent / Person.sibling in the
      * JSON-LD schema below. Corroborates the Person entity for Knowledge
