@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import "@/lib/fontawesome";
 import { Providers } from "@/components/reactbits/providers";
@@ -80,6 +81,20 @@ export default function RootLayout({
       className={`${inter.variable} ${display.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        {/* AdSense's review process checks every page for this exact script
+            before approving the account — its absence is one of the most
+            common rejection reasons. beforeInteractive is the one strategy
+            Next.js actually injects into <head> server-side, matching
+            Google's own "paste this between <head></head>" instruction, but
+            it's only permitted in the root layout — hence here, not a nested
+            one, so it truly loads on every page including the pages Google's
+            crawler samples during review. */}
+        <Script
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-${siteConfig.adsensePublisherId}`}
+          crossOrigin="anonymous"
+          strategy="beforeInteractive"
+        />
         <Providers>{children}</Providers>
       </body>
     </html>

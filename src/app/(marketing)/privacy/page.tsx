@@ -57,6 +57,28 @@ export default function PrivacyPage() {
               analytics cookies to understand usage. You can disable cookies in
               your browser settings at any time.
             </p>
+            <p>
+              We use Google AdSense, a third-party advertising service. Google,
+              as a third-party vendor, uses cookies to serve ads on this site
+              based on your prior visits to this and other websites. You can
+              opt out of personalized advertising by visiting{" "}
+              <a
+                href="https://adssettings.google.com"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Google Ads Settings
+              </a>
+              , and learn more about how Google uses data at{" "}
+              <a
+                href="https://policies.google.com/technologies/ads"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                policies.google.com/technologies/ads
+              </a>
+              .
+            </p>
             <h2>Data retention</h2>
             <p>
               We keep your data only as long as necessary to provide our

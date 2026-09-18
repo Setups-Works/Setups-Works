@@ -77,6 +77,12 @@ export const siteConfig = {
    * Knowledge Graph weights far above anything self-published here.
    */
   crunchbase: "https://www.crunchbase.com/organization/setups-works",
+  /**
+   * AdSense publisher ID — the same value ads.txt/app-ads.txt declare and the
+   * verification script in the marketing layout loads. One source of truth so
+   * the three can't drift apart, which would fail AdSense's ads.txt cross-check.
+   */
+  adsensePublisherId: "pub-6621171335214437",
   areaServed: ["Chennai", "Tamil Nadu", "India", "Worldwide"],
   founderProfile: {
     name: "Nitheesh Rajendran",

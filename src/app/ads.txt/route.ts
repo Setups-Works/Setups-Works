@@ -1,3 +1,5 @@
+import { siteConfig } from "@/lib/site";
+
 export const runtime = "nodejs";
 
 /**
@@ -6,7 +8,7 @@ export const runtime = "nodejs";
  * rather than in a published app.
  */
 export function GET(): Response {
-  const body = "google.com, pub-6621171335214437, DIRECT, f08c47fec0942fa0\n";
+  const body = `google.com, ${siteConfig.adsensePublisherId}, DIRECT, f08c47fec0942fa0\n`;
   return new Response(body, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
