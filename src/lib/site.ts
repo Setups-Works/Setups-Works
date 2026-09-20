@@ -83,6 +83,8 @@ export const siteConfig = {
    * the three can't drift apart, which would fail AdSense's ads.txt cross-check.
    */
   adsensePublisherId: "pub-6621171335214437",
+  /** Facebook Audience Network publisher ID, declared in app-ads.txt. */
+  facebookPublisherId: "2584616511998610",
   areaServed: ["Chennai", "Tamil Nadu", "India", "Worldwide"],
   founderProfile: {
     name: "Nitheesh Rajendran",
