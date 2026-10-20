@@ -139,6 +139,105 @@ async function createViaApi(lead: PerfexLead): Promise<PerfexResult> {
   return { ok: true, status, leadId: id != null ? String(id) : undefined };
 }
 
+/** Where the CRM's admin UI lives, for links in notification emails. */
+export const crmAdminUrl = API_URL.replace(/\/api$/, "") + "/admin";
+export const crmLeadLink = (id: string) => `${crmAdminUrl}/leads/index/${id}`;
+export const crmProposalLink = (id: string) =>
+  `${crmAdminUrl}/proposals/list_proposals/${id}`;
+
+const CURRENCY = process.env.PERFEX_CURRENCY_ID || "3";
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+
+/** Next working day (Mon–Fri), matching the "reply within one business day" promise. */
+export function nextBusinessDay(from = new Date()): Date {
+  const d = new Date(from);
+  do d.setDate(d.getDate() + 1);
+  while (d.getDay() === 0 || d.getDay() === 6);
+  return d;
+}
+
+function recordId(body: ApiEnvelope | null): string | undefined {
+  const id =
+    body?.record_id ?? (body?.data as { record_id?: string | number } | undefined)?.record_id;
+  return id != null ? String(id) : undefined;
+}
+
+/**
+ * Create a DRAFT proposal on the lead, pre-filled from the enquiry, for the
+ * owner to price and send from the CRM. Draft = status 6; nothing reaches the
+ * customer until someone sends it. One placeholder line at rate 0 because the
+ * API requires at least one item.
+ */
+export async function createDraftProposal(opts: {
+  leadId: string;
+  name: string;
+  email: string;
+  subject: string;
+  itemDescription: string;
+  details: string;
+}): Promise<{ ok: boolean; proposalId?: string; error?: string }> {
+  const today = new Date();
+  const until = new Date(today);
+  until.setDate(until.getDate() + 30);
+  const { ok, status, body } = await api<ApiEnvelope>("/proposals", {
+    method: "POST",
+    json: {
+      subject: opts.subject,
+      Related: "lead",
+      rel_id: opts.leadId,
+      proposal_to: opts.name,
+      Email: opts.email,
+      date: iso(today),
+      open_till: iso(until),
+      currency: CURRENCY,
+      discount_type: "",
+      status: "6",
+      Assigned: LEAD_ASSIGNED,
+      content: opts.details,
+      newitems: [
+        {
+          description: opts.itemDescription,
+          long_description: "",
+          qty: "1",
+          rate: "0",
+          unit: "",
+          order: "1",
+        },
+      ],
+    },
+  });
+  if (!ok || body?.status === false) {
+    return { ok: false, error: body?.message || body?.error || `CRM API returned ${status}` };
+  }
+  return { ok: true, proposalId: recordId(body) };
+}
+
+/** Create a task on the lead so "prepare proposal" shows up in the CRM to-do list. */
+export async function createLeadTask(opts: {
+  leadId: string;
+  name: string;
+  description: string;
+  due: Date;
+}): Promise<{ ok: boolean; taskId?: string; error?: string }> {
+  const { ok, status, body } = await api<ApiEnvelope>("/tasks", {
+    method: "POST",
+    json: {
+      name: opts.name,
+      startdate: iso(new Date()),
+      duedate: iso(opts.due),
+      priority: "3",
+      rel_type: "lead",
+      rel_id: opts.leadId,
+      assignees: LEAD_ASSIGNED,
+      description: opts.description,
+    },
+  });
+  if (!ok || body?.status === false) {
+    return { ok: false, error: body?.message || body?.error || `CRM API returned ${status}` };
+  }
+  return { ok: true, taskId: recordId(body) };
+}
+
 export interface PerfexLeadState {
   /** Status name, e.g. "Active". */
   status: string;

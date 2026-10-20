@@ -132,6 +132,29 @@ const esc = (s: string) =>
  * Branded notification email for a new lead. Plain table markup on purpose —
  * it's what survives Gmail, Outlook, and Apple Mail without a build step.
  */
+/** Acknowledgement sent to the visitor the moment they submit. */
+export function autoReplyTemplate(opts: { name: string; type: string }) {
+  const first = esc(opts.name.split(" ")[0]);
+  const what = opts.type === "quotation" ? "quotation request" : "enquiry";
+  return `
+  <div style="margin:0;padding:24px;background:#f2f4f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+    <table role="presentation" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb">
+      <tr><td style="padding:24px 28px;background:#0a0b0f"><p style="margin:0;color:#ffffff;font-size:18px;font-weight:700">${esc(siteConfig.name)}</p></td></tr>
+      <tr><td style="padding:28px">
+        <p style="margin:0 0 12px;font-size:16px;color:#0a0b0f">Hi ${first},</p>
+        <p style="margin:0 0 12px;font-size:14px;line-height:1.6;color:#374151">Thanks — we've received your ${what}. A real person is reading it now.</p>
+        <p style="margin:0 0 6px;font-size:14px;font-weight:600;color:#0a0b0f">What happens next</p>
+        <ol style="margin:0 0 16px;padding-left:20px;font-size:14px;line-height:1.7;color:#374151">
+          <li>We review your details and prepare a written proposal.</li>
+          <li>You'll hear back from us within one business day.</li>
+          <li>If it helps, we'll set up a short call to talk it through.</li>
+        </ol>
+        <p style="margin:0;font-size:14px;color:#374151">Just reply to this email if you want to add anything.</p>
+      </td></tr>
+    </table>
+  </div>`;
+}
+
 export function leadEmailTemplate(lead: Record<string, string | undefined>) {
   const label = lead.type === "quotation" ? "Quotation request" : "New enquiry";
   const rows: [string, string | undefined][] = [
@@ -148,6 +171,8 @@ export function leadEmailTemplate(lead: Record<string, string | undefined>) {
     ["Country", lead.countryName],
     ["Pin code", lead.zip],
     ["Submitted from", lead.source],
+    ["CRM lead", lead.crmLeadLink],
+    ["Draft proposal", lead.crmProposalLink],
   ];
 
   const body = rows

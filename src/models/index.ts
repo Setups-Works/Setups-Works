@@ -256,6 +256,10 @@ const LeadSchema = new Schema(
     crmLeadId: { type: String, default: "", index: true },
     /** Latest state read back from the CRM by /api/cron/perfex-sync. */
     crmLeadStatus: { type: String, default: "" },
+    /** Draft proposal + follow-up task auto-created in the CRM for this lead. */
+    crmProposalId: { type: String, default: "" },
+    crmTaskId: { type: String, default: "" },
+    autoReplyStatus: { type: String, enum: ["pending", "sent", "failed"], default: "pending" },
     crmLost: { type: Boolean, default: false },
     crmConverted: { type: Boolean, default: false },
     crmCheckedAt: { type: Date },

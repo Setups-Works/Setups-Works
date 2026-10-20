@@ -155,8 +155,34 @@ export function LeadForm({
         <p className="mx-auto mt-2 max-w-sm text-muted-foreground">
           Thanks {form.name.split(" ")[0]}. We&apos;ve got your{" "}
           {form.type === "quotation" ? "quotation request" : "enquiry"} and
-          we&apos;ll reply within one business day.
+          sent a confirmation to <span className="font-medium text-foreground">{form.email}</span>.
         </p>
+        <ol className="mx-auto mt-8 max-w-sm space-y-4 text-left">
+          {[
+            { t: "Received", d: "Your details are with our team.", on: true },
+            {
+              t: form.type === "quotation" ? "Proposal being prepared" : "We read it properly",
+              d: "A real person reviews your project and writes it up.",
+              on: false,
+            },
+            { t: "Reply within 1 business day", d: "Your proposal or answer lands in your inbox.", on: false },
+          ].map((x) => (
+            <li key={x.t} className="flex gap-3">
+              <span
+                className={cn(
+                  "mt-0.5 grid size-6 shrink-0 place-items-center rounded-full text-xs font-bold",
+                  x.on ? "bg-brand-500 text-white" : "bg-surface-2 text-muted-foreground",
+                )}
+              >
+                {x.on ? "✓" : ""}
+              </span>
+              <span>
+                <span className="block text-sm font-semibold">{x.t}</span>
+                <span className="block text-sm text-muted-foreground">{x.d}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
       </div>
     );
   }

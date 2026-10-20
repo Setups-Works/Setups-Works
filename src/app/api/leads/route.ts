@@ -11,7 +11,9 @@ import {
 } from "@/lib/api-utils";
 import { toCSV } from "@/lib/helpers";
 import { submitToPerfex } from "@/lib/perfex";
-import { sendMail, leadEmailTemplate } from "@/lib/mailer";
+import { sendMail, leadEmailTemplate, autoReplyTemplate } from "@/lib/mailer";
+import { runLeadAutomation } from "@/lib/lead-automation";
+import { siteConfig } from "@/lib/site";
 import { countryNameById } from "@/data/countries";
 
 export const runtime = "nodejs";
@@ -76,38 +78,62 @@ export async function POST(req: Request) {
       source: data.source,
     });
 
-    // Fire both side effects together; neither can fail the request.
-    const [crm, mail] = await Promise.all([
-      submitToPerfex({
-        name: data.name,
-        email: data.email,
-        phonenumber: data.phonenumber,
-        company: data.company,
-        address: data.address,
-        city: data.city,
-        state: data.state,
-        country: data.country,
-        zip: data.zip,
-        description: buildDescription(data, countryName),
-      }).catch((e) => ({ ok: false, error: (e as Error).message })),
+    // 1. Push to the CRM first: the automation and the notification email
+    //    both need the CRM lead id / links it returns.
+    const crm = await submitToPerfex({
+      name: data.name,
+      email: data.email,
+      phonenumber: data.phonenumber,
+      company: data.company,
+      address: data.address,
+      city: data.city,
+      state: data.state,
+      country: data.country,
+      zip: data.zip,
+      description: buildDescription(data, countryName),
+    }).catch((e) => ({ ok: false, error: (e as Error).message }) as const);
 
+    const crmLeadId = crm.ok && "leadId" in crm ? crm.leadId : undefined;
+
+    // 2. Draft proposal + follow-up task in the CRM (no-op without the API).
+    const auto = crmLeadId
+      ? await runLeadAutomation(String(lead._id), crmLeadId, data).catch((e) => ({
+          links: {} as { lead?: string; proposal?: string },
+          errors: [(e as Error).message],
+        }))
+      : { links: {} as { lead?: string; proposal?: string }, errors: [] as string[] };
+
+    // 3. Notify the owner and acknowledge the visitor, in parallel.
+    const [mail, reply] = await Promise.all([
       sendMail({
         subject:
           data.type === "quotation"
             ? `Quotation request — ${data.name}${data.service ? ` (${data.service})` : ""}`
             : `New enquiry — ${data.name}${data.service ? ` (${data.service})` : ""}`,
-        html: leadEmailTemplate({ ...data, countryName }),
+        html: leadEmailTemplate({
+          ...data,
+          countryName,
+          crmLeadLink: auto.links.lead,
+          crmProposalLink: auto.links.proposal,
+        }),
         replyTo: data.email,
+      }).catch((e) => ({ ok: false, error: (e as Error).message })),
+      sendMail({
+        to: data.email,
+        subject: `We've received your ${data.type === "quotation" ? "quotation request" : "enquiry"} — ${siteConfig.name}`,
+        html: autoReplyTemplate({ name: data.name, type: data.type }),
       }).catch((e) => ({ ok: false, error: (e as Error).message })),
     ]);
 
     await Lead.findByIdAndUpdate(lead._id, {
       crmStatus: crm.ok ? "synced" : "failed",
       crmError: crm.ok ? "" : (crm.error ?? "").slice(0, 500),
-      ...(crm.ok && "leadId" in crm && crm.leadId ? { crmLeadId: crm.leadId } : {}),
+      ...(crmLeadId ? { crmLeadId } : {}),
       emailStatus: mail.ok ? "sent" : "failed",
+      autoReplyStatus: reply.ok ? "sent" : "failed",
     });
 
+    for (const e of auto.errors) console.error("[leads] automation:", e);
     if (!crm.ok) console.error("[leads] CRM sync failed:", crm.error);
     if (!mail.ok) console.error("[leads] email failed:", mail.error);
 

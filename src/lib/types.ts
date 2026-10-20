@@ -238,6 +238,9 @@ export interface Lead {
   crmError?: string;
   crmLeadId?: string;
   crmLeadStatus?: string;
+  crmProposalId?: string;
+  crmTaskId?: string;
+  autoReplyStatus?: "pending" | "sent" | "failed";
   crmLost?: boolean;
   crmConverted?: boolean;
   crmCheckedAt?: string;
