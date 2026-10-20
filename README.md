@@ -81,6 +81,9 @@ The site runs at `http://localhost:3000`, the admin at `/admin/login`.
 | `CLOUDINARY_*` | | Image hosting. Falls back to `/public/uploads` |
 | `GROQ_API_KEY` / `GROQ_MODEL` | | AI draft generation in the admin |
 | `PERFEX_WTL_URL` | | Perfex web-to-lead endpoint. Defaults to the production form |
+| `PERFEX_API_TOKEN` / `PERFEX_API_URL` | | Perfex REST API. Preferred over the form: returns the lead id so status syncs back |
+| `PERFEX_LEAD_SOURCE_ID` `PERFEX_LEAD_STATUS_ID` `PERFEX_ASSIGNED_STAFF_ID` | | CRM ids for new leads (default 1 / 2 / 1) |
+| `CRON_SECRET` | | Authorises Vercel Cron to call `/api/cron/perfex-sync` (retries failed pushes, reads lead status back) |
 | `CRAWLER_LOG_KEY` | | Shared secret for crawler logging. Logging is off without it |
 | `INDEXNOW_KEY` | | Instant indexing pings to Bing, Yandex, Naver, Seznam |
 

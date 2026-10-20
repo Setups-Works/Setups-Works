@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { requireDB } from "@/lib/db";
-import { Contact } from "@/models";
+import { Contact, Lead } from "@/models";
+import { submitToPerfex } from "@/lib/perfex";
 import {
   ok,
   created,
@@ -29,6 +30,41 @@ export async function POST(req: Request) {
   try {
     await requireDB();
     await Contact.create(data);
+
+    // Mirror into the CRM as a lead so every inbound conversation is in one
+    // place. Best-effort: the message is already saved, so a CRM outage must
+    // not fail the visitor's request. The lead is also stored locally so a
+    // failure is retried by /api/cron/perfex-sync.
+    const crm = await submitToPerfex({
+      name: data.name,
+      email: data.email,
+      phonenumber: "",
+      company: data.company,
+      description: [
+        "Type: Contact form message",
+        `Subject: ${data.subject}`,
+        data.budget && `Budget: ${data.budget}`,
+        `\n${data.message}`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    }).catch((e) => ({ ok: false, error: (e as Error).message }) as const);
+
+    await Lead.create({
+      name: data.name,
+      email: data.email,
+      phonenumber: "n/a",
+      company: data.company ?? "",
+      type: "enquiry",
+      service: data.subject,
+      budget: data.budget ?? "",
+      message: data.message,
+      source: "/contact",
+      crmStatus: crm.ok ? "synced" : "failed",
+      crmError: crm.ok ? "" : (crm.error ?? "").slice(0, 500),
+      ...(crm.ok && "leadId" in crm && crm.leadId ? { crmLeadId: crm.leadId } : {}),
+    });
+
     return created({ success: true });
   } catch (err) {
     console.error("[contact.POST]", err);

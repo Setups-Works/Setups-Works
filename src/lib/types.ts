@@ -236,6 +236,11 @@ export interface Lead {
   source?: string;
   crmStatus: "pending" | "synced" | "failed";
   crmError?: string;
+  crmLeadId?: string;
+  crmLeadStatus?: string;
+  crmLost?: boolean;
+  crmConverted?: boolean;
+  crmCheckedAt?: string;
   emailStatus: "pending" | "sent" | "failed";
   handled?: boolean;
   createdAt?: string;

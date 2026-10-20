@@ -104,6 +104,7 @@ export async function POST(req: Request) {
     await Lead.findByIdAndUpdate(lead._id, {
       crmStatus: crm.ok ? "synced" : "failed",
       crmError: crm.ok ? "" : (crm.error ?? "").slice(0, 500),
+      ...(crm.ok && "leadId" in crm && crm.leadId ? { crmLeadId: crm.leadId } : {}),
       emailStatus: mail.ok ? "sent" : "failed",
     });
 

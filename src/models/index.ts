@@ -252,6 +252,13 @@ const LeadSchema = new Schema(
       index: true,
     },
     crmError: { type: String, default: "" },
+    /** Perfex lead id, set when the lead was created through the REST API. */
+    crmLeadId: { type: String, default: "", index: true },
+    /** Latest state read back from the CRM by /api/cron/perfex-sync. */
+    crmLeadStatus: { type: String, default: "" },
+    crmLost: { type: Boolean, default: false },
+    crmConverted: { type: Boolean, default: false },
+    crmCheckedAt: { type: Date },
     emailStatus: {
       type: String,
       enum: ["pending", "sent", "failed"],

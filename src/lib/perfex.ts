@@ -1,4 +1,13 @@
 /**
+ * Perfex CRM integration.
+ *
+ * Preferred path: the REST API (`PERFEX_API_TOKEN`). It returns the new lead's
+ * id, which lets the site track the lead's status afterwards (see
+ * `fetchPerfexLead` and /api/cron/perfex-sync).
+ *
+ * Fallback path (no token configured): web-to-lead form submission, described
+ * below. It cannot return an id, so those leads are never status-tracked.
+ *
  * Perfex CRM web-to-lead submission.
  *
  * Perfex runs on CodeIgniter, whose CSRF protection is a matched pair: a
@@ -51,6 +60,119 @@ export interface PerfexResult {
   ok: boolean;
   status?: number;
   error?: string;
+  /** Perfex lead id. Only the REST API path can return one. */
+  leadId?: string;
+}
+
+const API_URL = (
+  process.env.PERFEX_API_URL || "https://crm.setups.works/api"
+).replace(/\/+$/, "");
+const API_TOKEN = process.env.PERFEX_API_TOKEN || "";
+
+/** Lead source / status / owner ids in the CRM (Setup > Leads). */
+const LEAD_SOURCE = process.env.PERFEX_LEAD_SOURCE_ID || "1";
+const LEAD_STATUS = process.env.PERFEX_LEAD_STATUS_ID || "2";
+const LEAD_ASSIGNED = process.env.PERFEX_ASSIGNED_STAFF_ID || "1";
+
+export const perfexApiEnabled = Boolean(API_TOKEN);
+
+async function api<T>(
+  path: string,
+  init: { method?: string; json?: unknown } = {},
+): Promise<{ ok: boolean; status: number; body: T | null }> {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: init.method ?? "GET",
+    headers: {
+      authtoken: API_TOKEN,
+      Accept: "application/json",
+      ...(init.json ? { "Content-Type": "application/json" } : {}),
+    },
+    body: init.json ? JSON.stringify(init.json) : undefined,
+    cache: "no-store",
+    signal: AbortSignal.timeout(15_000),
+  });
+  const body = (await res.json().catch(() => null)) as T | null;
+  return { ok: res.ok, status: res.status, body };
+}
+
+interface ApiEnvelope<D = unknown> {
+  status?: boolean;
+  message?: string;
+  error?: string;
+  record_id?: string | number;
+  data?: D;
+}
+
+/** Create a lead through the REST API. */
+async function createViaApi(lead: PerfexLead): Promise<PerfexResult> {
+  const { ok, status, body } = await api<ApiEnvelope>("/leads", {
+    method: "POST",
+    json: {
+      name: lead.name,
+      email: lead.email,
+      phonenumber: lead.phonenumber,
+      company: lead.company ?? "",
+      address: lead.address ?? "",
+      city: lead.city ?? "",
+      state: lead.state ?? "",
+      country: lead.country ?? "",
+      zip: lead.zip ?? "",
+      description: lead.description ?? "",
+      source: LEAD_SOURCE,
+      status: LEAD_STATUS,
+      assigned: LEAD_ASSIGNED,
+    },
+  });
+
+  if (!ok || body?.status === false) {
+    return {
+      ok: false,
+      status,
+      error: body?.message || body?.error || `CRM API returned ${status}`,
+    };
+  }
+
+  const id =
+    body?.record_id ??
+    (body?.data as { record_id?: string | number; id?: string | number } | undefined)?.record_id ??
+    (body?.data as { id?: string | number } | undefined)?.id;
+  return { ok: true, status, leadId: id != null ? String(id) : undefined };
+}
+
+export interface PerfexLeadState {
+  /** Status name, e.g. "Active". */
+  status: string;
+  lost: boolean;
+  junk: boolean;
+  converted: boolean;
+}
+
+/**
+ * Read a lead's current state. `null` means the lead no longer exists in the
+ * CRM (deleted there); throws on transport errors so callers can retry later.
+ */
+export async function fetchPerfexLead(id: string): Promise<PerfexLeadState | null> {
+  const { ok, status, body } = await api<
+    ApiEnvelope<{
+      status_name?: string;
+      lost?: string;
+      junk?: string;
+      date_converted?: string | null;
+    }>
+  >(`/leads/${encodeURIComponent(id)}`);
+
+  if (status === 404) return null;
+  if (!ok || !body?.data) throw new Error(`CRM API returned ${status}`);
+
+  // Single-record responses may arrive as an object or a one-item array.
+  const d = Array.isArray(body.data) ? body.data[0] : body.data;
+  if (!d) return null;
+  return {
+    status: d.status_name ?? "",
+    lost: d.lost === "1",
+    junk: d.junk === "1",
+    converted: Boolean(d.date_converted),
+  };
 }
 
 /** Pull the CSRF token value out of the rendered form HTML. */
@@ -73,6 +195,17 @@ function extractCookies(res: Response): string {
 }
 
 export async function submitToPerfex(lead: PerfexLead): Promise<PerfexResult> {
+  if (perfexApiEnabled) {
+    try {
+      return await createViaApi(lead);
+    } catch (err) {
+      return { ok: false, error: (err as Error).message };
+    }
+  }
+  return submitViaWebToLead(lead);
+}
+
+async function submitViaWebToLead(lead: PerfexLead): Promise<PerfexResult> {
   const url = FORM_URL;
 
   try {
