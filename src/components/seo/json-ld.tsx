@@ -95,6 +95,7 @@ const ORG_ALT_NAMES = [
   "Setupworks",
 ];
 
+
 /** Self-contained Organization reference used by the founder Person node. */
 const orgReference = {
   "@id": ORG_ID,
@@ -210,23 +211,53 @@ export function organizationSchema(services?: Service[], team?: TeamMember[]) {
         }
       : {}),
     /**
-     * CodeForge AI, stated as a subsidiary on its own domain rather than only
-     * as a product row here.
+     * Setups Works Lab (formerly CodeForge AI at codeforgeai.io), stated as a
+     * subsidiary on its own domain rather than only as a product row here.
      *
-     * The @id is the Organization node codeforgeai.io publishes, and that node
+     * The @id is the Organization node labs.setups.works publishes, and that node
      * names this one as its `parentOrganization` with a matching @id — so the
      * relationship is asserted from both sides and from both domains. A
      * one-directional claim is a company talking about itself; two graphs that
      * agree is corroboration.
      */
-    subOrganization: {
-      "@type": "Organization",
-      "@id": "https://codeforgeai.io/#org",
-      name: "CodeForge AI",
-      url: "https://codeforgeai.io",
-      description:
-        "AI-powered coding interview preparation platform — problem bank, multi-language compiler, AI mentoring and skill analytics.",
-    },
+    subOrganization: [
+      {
+        // @id and name match the Organization labs.setups.works publishes.
+        "@type": "Organization",
+        "@id": "https://labs.setups.works/#org",
+        name: "Setups Works Lab",
+        alternateName: "CodeForge AI",
+        url: "https://labs.setups.works",
+        description:
+          "AI-powered coding interview preparation platform — problem bank, multi-language compiler, AI mentoring and skill analytics.",
+      },
+      // Naazhi, the same way: naazhi.app's Organization names this @id as its
+      // parentOrganization and the founder (#founder) as its founder.
+      {
+        "@type": "Organization",
+        "@id": "https://naazhi.app/#organization",
+        name: "Naazhi",
+        alternateName: "நாழி",
+        url: "https://naazhi.app",
+        description:
+          "Notes, tasks, journal, chat and calendar in one workspace, with an AI you can swap, bring your own key for, or switch off.",
+        founder: { "@id": `${siteConfig.url}/#founder` },
+      },
+    ],
+    // The Naazhi app, by the @id naazhi.app publishes for it (which names this
+    // company as its creator), so company and product are one edge apart on
+    // both domains.
+    owns: [
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://naazhi.app/#software",
+        name: "Naazhi",
+        url: "https://naazhi.app",
+        applicationCategory: "ProductivityApplication",
+        operatingSystem: "Android, macOS, Windows, Web",
+        installUrl: "https://play.google.com/store/apps/details?id=com.setupsworks.naazhi",
+      },
+    ],
     /**
      * The physical storefront, as a department of this Organization —
      * schema.org's own example for "a store with a pharmacy, or a bakery with

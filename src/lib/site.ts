@@ -153,7 +153,10 @@ export const siteConfig = {
       "https://www.wikidata.org/wiki/Q140500455",
       // Google Knowledge Panel share link — helps Google reconcile this Person
       // entity with its existing panel.
-      "https://share.google/R49gz3hj0ZA74MmQt",
+      // The panel's permanent kgmid URL, then its share link. Same two on
+      // naazhi.app and nitheeshdr.in, so all three sites name one panel.
+      "https://www.google.com/search?kgmid=/g/11mvs7d_hp",
+      "https://share.google/ZDfPNUlpU4z1mW2uW",
       // Crunchbase person profile. Deliberately the person URL, not the
       // organization one — the org's Crunchbase page belongs in `orgSameAs`,
       // and crossing the two is what makes a search engine merge the person
