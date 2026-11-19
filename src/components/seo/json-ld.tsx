@@ -255,6 +255,7 @@ export function organizationSchema(services?: Service[], team?: TeamMember[]) {
         url: "https://naazhi.app",
         applicationCategory: "ProductivityApplication",
         operatingSystem: "Android, macOS, Windows, Web",
+        offers: { "@type": "Offer", price: "0", priceCurrency: "INR", url: "https://naazhi.app/pricing" },
         installUrl: "https://play.google.com/store/apps/details?id=com.setupsworks.naazhi",
       },
     ],
